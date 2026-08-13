@@ -104,8 +104,7 @@ Este projeto tem dois artefatos intencionalmente separados:
 ### `app.py` — Dashboard Interativo
 - Modelo: **RandomForest** (scikit-learn)
 - Foco: usabilidade, simulador interativo, plano de ação em tempo real
-- AUC-ROC (holdout): ~0.92 | Cross-Val 5-fold: ~0.91 ± 0.01
-- Recall churn: ~85% (detecta 8 em cada 10 churns reais)
+- Recall churn: ~95% no dado sintético — ver a ressalva sobre as métricas mais abaixo
 
 ### `pipeline.py` — Validação Técnica Completa
 - Compara 4 modelos: Logistic Regression, RandomForest, **XGBoost** (selecionado), LightGBM
@@ -126,6 +125,38 @@ Este projeto tem dois artefatos intencionalmente separados:
 | RandomForest | 0.9942 | 0.9951 | 0.9520 | 0.9467 |
 | **XGBoost** ✓ | **0.9949** | **0.9960** | **0.9544** | **0.9544** |
 | LightGBM | 0.9948 | 0.9960 | 0.9530 | 0.9567 |
+
+### Sobre esses números: eles medem o gerador, não o modelo
+
+AUC 0,996 em churn não acontece com dado real. Aqui acontece porque **os dados são
+sintéticos e gerados condicionalmente ao rótulo**: cada variável é sorteada de uma
+distribuição diferente conforme o cliente ser churn ou não (`build_dataset`, em
+`pipeline.py`, declara isso na própria docstring — "garante alta separabilidade").
+
+O sinal de que isso é artefato do dado e não mérito do modelo está na própria tabela:
+**uma regressão logística simples faz 0,9946.** Quando o modelo mais simples empata com o
+mais sofisticado em 0,99, o que está fácil é o problema, não o algoritmo.
+
+O que este projeto demonstra de verdade: montagem de pipeline com validação cruzada
+estratificada, comparação de modelos, calibração de threshold pela curva
+Precision-Recall, calibração de probabilidade e interpretabilidade com SHAP. **A métrica
+não é evidência de performance em produção** — com dado real, esperar algo entre 0,75 e
+0,85 seria realista.
+
+---
+
+## Interpretabilidade — o que o modelo está olhando
+
+![Importância das features por SHAP](outputs/shap/shap_summary.png)
+
+Cada ponto é um cliente. À direita do eixo, a variável empurra a previsão para churn; à
+esquerda, segura. A cor é o valor da variável — vermelho alto, azul baixo.
+
+![Matriz de confusão](outputs/confusion_matrix.png)
+
+Explicação individual — por que **este** cliente foi classificado como risco alto:
+
+![Explicação individual de um cliente](outputs/shap/shap_force_cliente_1.png)
 
 ---
 
