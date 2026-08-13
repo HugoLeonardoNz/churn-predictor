@@ -6,14 +6,20 @@
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-RandomForest-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-Interactive-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
 ![Domain](https://img.shields.io/badge/Domain-Telecom%20%2F%20ISP-0ea5e9?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Live-10b981?style=for-the-badge)
+![Status](https://img.shields.io/badge/Rodar-local%20em%202%20comandos-10b981?style=for-the-badge)
 
 **Projeto 3 de 3 da série FiberNet Analytics.**  
 Pipeline completo de ML para identificação e priorização de contratos em risco de cancelamento — do feature engineering ao plano de ação operacional.
 
-[🔗 Ver Demo Live](https://hugoleonardonz-churn-predictor.streamlit.app) · [Ver Pipeline Técnico](#-pipeline-técnico-pipelinepy)
+[Ver pipeline técnico](#desempenho-dos-modelos-pipelinepy) · [Como rodar](#como-rodar)
 
 </div>
+
+---
+
+![Dashboard de análise de risco](docs/img/app.png)
+
+*Aba de Análise de Risco: exposição de MRR por faixa, alerta de concentração e padrão de cancelamento por plano.*
 
 ---
 
@@ -86,7 +92,7 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Acessa em `http://localhost:8501` — sem instalação: [ver demo live](https://hugoleonardonz-churn-predictor.streamlit.app)
+Acessa em `http://localhost:8501`.
 
 ### Pipeline de Validação Técnica
 
