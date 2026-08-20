@@ -6,9 +6,9 @@ _Gerado automaticamente por pipeline.py - Dados sintéticos - Hugo Leonardo_
 
 ## 1. Modelo Escolhido e Justificativa
 
-**Modelo selecionado: `XGBoost`**
+**Modelo selecionado: `LogisticRegression`**
 
-Escolhido por apresentar o maior AUC-ROC médio em validação cruzada estratificada (5-fold), com AUC = **0.9960** no conjunto de teste. Modelos tree-based são preferíveis neste contexto por capturarem interações não-lineares entre features de risco (atraso, NPS, suporte) sem exigir normalidade dos dados.
+Escolhido por apresentar o maior AUC-ROC médio em validação cruzada estratificada (5-fold), com AUC = **0.7854** no conjunto de teste. Modelos tree-based são preferíveis neste contexto por capturarem interações não-lineares entre features de risco (atraso, NPS, suporte) sem exigir normalidade dos dados.
 
 ---
 
@@ -16,10 +16,10 @@ Escolhido por apresentar o maior AUC-ROC médio em validação cruzada estratifi
 
 | Modelo             |   CV AUC (μ) |   CV AUC (σ) |   AUC-ROC |     F1 |   Precisão |   Recall |   Brier |
 |:-------------------|-------------:|-------------:|----------:|-------:|-----------:|---------:|--------:|
-| LogisticRegression |       0.9934 |       0.0012 |    0.9946 | 0.9409 |     0.9267 |   0.9556 |  0.0268 |
-| RandomForest       |       0.9942 |       0.001  |    0.9951 | 0.952  |     0.9573 |   0.9467 |  0.023  |
-| XGBoost            |       0.9949 |       0.001  |    0.996  | 0.9544 |     0.9544 |   0.9544 |  0.0217 |
-| LightGBM           |       0.9948 |       0.001  |    0.996  | 0.953  |     0.9493 |   0.9567 |  0.0214 |
+| LogisticRegression |       0.7738 |       0.008  |    0.7854 | 0.6517 |     0.6542 |   0.6491 |  0.1695 |
+| RandomForest       |       0.78   |       0.0096 |    0.7787 | 0.671  |     0.8009 |   0.5774 |  0.1418 |
+| XGBoost            |       0.7791 |       0.0088 |    0.7769 | 0.6733 |     0.7549 |   0.6076 |  0.153  |
+| LightGBM           |       0.7741 |       0.0118 |    0.7846 | 0.6667 |     0.7418 |   0.6054 |  0.155  |
 
 > Métricas calculadas no conjunto de teste (20% holdout, estratificado).
 > Threshold padrão = 0.50.
@@ -30,16 +30,16 @@ Escolhido por apresentar o maior AUC-ROC médio em validação cruzada estratifi
 
 | Rank | Feature | SHAP médio |
 |------|---------|-----------|
-| 1 | `meses_sem_incidente` | 2.5761 |
-| 2 | `score_satisfacao` | 1.5148 |
-| 3 | `score_risco_total` | 1.2588 |
-| 4 | `qtd_chamados_suporte` | 0.6966 |
-| 5 | `pressao_suporte` | 0.5328 |
-| 6 | `nps_score` | 0.4139 |
-| 7 | `dias_atraso_pagamento` | 0.3200 |
-| 8 | `log_score_risco` | 0.3122 |
-| 9 | `tempo_contrato` | 0.2285 |
-| 10 | `valor_mensalidade` | 0.1870 |
+| 1 | `meses_sem_incidente` | 0.9609 |
+| 2 | `score_satisfacao` | 0.7491 |
+| 3 | `nps_score` | 0.5815 |
+| 4 | `qtd_chamados_suporte` | 0.2984 |
+| 5 | `plano` | 0.1772 |
+| 6 | `tem_fidelidade` | 0.1450 |
+| 7 | `regiao` | 0.0937 |
+| 8 | `risco_pagamento` | 0.0730 |
+| 9 | `dias_atraso_pagamento` | 0.0729 |
+| 10 | `uso_medio_gb` | 0.0710 |
 
 > Importância global = média do valor absoluto dos SHAP values no conjunto de teste.
 
@@ -47,22 +47,22 @@ Escolhido por apresentar o maior AUC-ROC médio em validação cruzada estratifi
 
 ## 4. Threshold Ótimo e Impacto na Precision/Recall
 
-| Métrica | Threshold = 0.50 | Threshold ótimo = 0.522 |
+| Métrica | Threshold = 0.50 | Threshold ótimo = 0.603 |
 |---------|-----------------|--------------------------------------|
-| F1-Score  | 0.9544 | 0.9549 |
-| Precisão  | 0.9544 | 0.9575 |
-| Recall    | 0.9544 | 0.9522 |
-| AUC-ROC   | 0.9960 | 0.9960 |
+| F1-Score  | 0.6517 | 0.6730 |
+| Precisão  | 0.6542 | 0.7702 |
+| Recall    | 0.6491 | 0.5975 |
+| AUC-ROC   | 0.7854 | 0.7854 |
 
-**Threshold ótimo = 0.522** — calculado pelo máximo F1 na curva Precision-Recall.
+**Threshold ótimo = 0.603** — calculado pelo máximo F1 na curva Precision-Recall.
 Recall é priorizado (não perder churners reais) em detrimento de precisão.
 
 ### Calibração de Probabilidade
 
 | | Brier Score |
 |---|-------------|
-| Modelo original  | 0.0217 |
-| Após calibração (isotonic) | 0.0212 |
+| Modelo original  | 0.1695 |
+| Após calibração (isotonic) | 0.1388 |
 
 ---
 
@@ -70,37 +70,37 @@ Recall é priorizado (não perder churners reais) em detrimento de precisão.
 
 ### Cliente Alto Risco #1
 
-- **Probabilidade de churn:** `100.0%`
+- **Probabilidade de churn:** `99.8%`
 - **Plano:** Fibra 200MB
-- **Valor mensalidade:** R$ 97.59
-- **Tempo de contrato:** 1 meses
-- **Dias em atraso:** 15 dias
-- **NPS score:** 3.7
-- **Chamados de suporte:** 9
+- **Valor mensalidade:** R$ 112.88
+- **Tempo de contrato:** 33 meses
+- **Dias em atraso:** 71 dias
+- **NPS score:** 0.0
+- **Chamados de suporte:** 8
 - **Fidelidade:** Não
 - **SHAP plot:** `outputs/shap/shap_force_cliente_1.png`
 
 ### Cliente Alto Risco #2
 
-- **Probabilidade de churn:** `100.0%`
+- **Probabilidade de churn:** `99.8%`
 - **Plano:** Fibra 100MB
-- **Valor mensalidade:** R$ 83.51
-- **Tempo de contrato:** 1 meses
-- **Dias em atraso:** 30 dias
-- **NPS score:** 3.6
-- **Chamados de suporte:** 4
+- **Valor mensalidade:** R$ 75.40
+- **Tempo de contrato:** 3 meses
+- **Dias em atraso:** 86 dias
+- **NPS score:** 0.0
+- **Chamados de suporte:** 9
 - **Fidelidade:** Não
 - **SHAP plot:** `outputs/shap/shap_force_cliente_2.png`
 
 ### Cliente Alto Risco #3
 
-- **Probabilidade de churn:** `100.0%`
+- **Probabilidade de churn:** `99.8%`
 - **Plano:** Fibra 100MB
-- **Valor mensalidade:** R$ 84.40
-- **Tempo de contrato:** 2 meses
-- **Dias em atraso:** 47 dias
-- **NPS score:** 4.2
-- **Chamados de suporte:** 4
+- **Valor mensalidade:** R$ 74.33
+- **Tempo de contrato:** 1 meses
+- **Dias em atraso:** 70 dias
+- **NPS score:** 3.0
+- **Chamados de suporte:** 9
 - **Fidelidade:** Não
 - **SHAP plot:** `outputs/shap/shap_force_cliente_3.png`
 
@@ -122,4 +122,4 @@ Recall é priorizado (não perder churners reais) em detrimento de precisão.
 
 ---
 
-_Dataset: 15.000 registros sintéticos - Churn rate: 30.0% - Seed: 42_
+_Dataset: 15.000 registros sintéticos - Churn rate: 29.7% - Seed: 42_

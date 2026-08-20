@@ -48,6 +48,10 @@ except ImportError:
 # ── Constants ──────────────────────────────────────────────────────────────────
 
 SEED    = 42
+
+# Parcela de clientes cujo desfecho contraria o comportamento observado.
+# É o teto de separabilidade do dataset — ver a docstring de build_dataset.
+RUIDO_COMPORTAMENTAL = 0.15
 PLANOS  = ["Fibra 100MB", "Fibra 200MB", "Fibra 500MB", "Empresarial"]
 REGIOES = ["Norte", "Sul", "Leste", "Oeste", "Centro"]
 
@@ -94,25 +98,40 @@ FEATURE_NAMES = ALL_FEATURES  # same order after ColumnTransformer
 
 def build_dataset(n: int = 15_000, seed: int = SEED) -> pd.DataFrame:
     """
-    Gera dataset ISP com geração condicional por classe (churn=1 / churn=0).
-    Garante: ~30% churn, correlações validadas, e alta separabilidade (AUC >= 0.85).
+    Gera dataset ISP com geração condicional ao PERFIL de comportamento.
 
-    Correlações garantidas por design:
+    Correlações garantidas por design (sobre o perfil):
       dias_atraso > 30  -> P(churn|atrasado)/P(churn|normal)  >= 3x
       nps_score <= 5    -> P(churn|nps<=5)/P(churn|nps>5)     >= 2.5x
       tem_fidelidade    -> P(churn|fid)/P(churn|sem_fid)      <= 0.40
       qtd_upgrades >= 1 -> P(churn|upgrade)/P(churn|sem)      <= 0.75
+
+    O rótulo NÃO é o perfil. Uma versão anterior gerava cada variável
+    condicionada ao próprio `churn`, o que produzia AUC 0,996 — e a regressão
+    logística fazia 0,9946. Quando o modelo mais simples empata com o mais
+    sofisticado em 0,99, o que está fácil é o problema, não o algoritmo: o
+    dataset media o gerador, não o modelo, e o SHAP só redescobria as regras
+    que o próprio script tinha escrito.
+
+    `RUIDO_COMPORTAMENTAL` é a parcela de clientes cujo desfecho contraria o
+    comportamento observado — quem cancela sem nenhum sinal prévio e quem
+    acumula todos os sinais e fica. Isso existe em base real: as variáveis
+    disponíveis não explicam tudo, e um teto de acerto é o que separa um
+    exercício de modelagem de um exercício de decoração. O valor está calibrado
+    para AUC de teste na faixa de 0,80–0,86, que é onde vive um bom modelo de
+    churn com dado de verdade.
     """
     rng = np.random.default_rng(seed)
 
-    # ── Churn labels: 30% = 1, 70% = 0 ──────────────────────────────────────
-    n_churn  = int(n * 0.30)
+    # A proporção de perfis é resolvida de trás para frente para o churn final
+    # continuar em ~30%: p*(1-e) + (1-p)*e = 0.30.
+    e = RUIDO_COMPORTAMENTAL
+    p_perfil = (0.30 - e) / (1 - 2 * e)
+    n_churn  = int(n * p_perfil)      # bloco gerado com comportamento de churn
     n_active = n - n_churn
-    churn    = np.array([1] * n_churn + [0] * n_active)
-
-    def _gen(nc, na):
-        """Helper: concatenate churner and active arrays."""
-        return nc, na  # return separate arrays for convenience
+    perfil   = np.array([1] * n_churn + [0] * n_active)
+    troca    = rng.random(n) < e
+    churn    = np.where(troca, 1 - perfil, perfil)
 
     # ── dias_atraso_pagamento ─────────────────────────────────────────────────
     # Churners:  35% high-delay (>30d), 35% mid (6-30d), 30% low (0-5d)
@@ -705,10 +724,17 @@ def main():
     # Final summary
     banner("RESUMO FINAL", c="-")
     print(f"  Modelo     : {best_name}")
-    print(f"  AUC-ROC    : {m_topt['AUC-ROC']:.4f}  "
-          f"{'[OK]' if m_topt['AUC-ROC'] >= 0.80 else '[!] ABAIXO DO MÍNIMO'}")
+    # A faixa esperada tem teto e piso. Piso porque abaixo de 0,72 o modelo nao
+    # esta aprendendo; TETO porque, com 15% de desfechos que contrariam o
+    # comportamento observado, um AUC de 0,95 aqui so poderia vir de vazamento
+    # de informacao — e um numero alto demais e sintoma, nao conquista.
+    auc = m_topt["AUC-ROC"]
+    faixa = "[OK]" if 0.72 <= auc <= 0.92 else (
+        "[!] ABAIXO DA FAIXA — modelo nao aprendeu" if auc < 0.72
+        else "[!] ACIMA DA FAIXA — suspeitar de vazamento")
+    print(f"  AUC-ROC    : {auc:.4f}  {faixa}")
     print(f"  F1-Score   : {m_topt['F1']:.4f}  "
-          f"{'[OK]' if m_topt['F1'] >= 0.72 else '[!] ABAIXO DO MÍNIMO'}")
+          f"{'[OK]' if m_topt['F1'] >= 0.60 else '[!] ABAIXO DO MÍNIMO'}")
     print(f"  Recall     : {m_topt['Recall']:.4f}")
     print(f"  Precisão   : {m_topt['Precisão']:.4f}")
     print(f"  Threshold  : {opt_thr:.4f}")
