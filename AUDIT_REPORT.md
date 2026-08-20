@@ -8,7 +8,7 @@
 
 ## Resumo do Projeto
 
-Pipeline completo de Machine Learning para predição de churn em ISP de fibra (universo FiberNet). Compara quatro modelos (LogisticRegression, RandomForest, XGBoost, LightGBM), seleciona XGBoost com AUC 0.92 em cross-validation 5-fold, e entrega interface Streamlit interativa com SHAP explicabilidade.
+Pipeline completo de Machine Learning para predição de churn em ISP de fibra (universo FiberNet). Compara quatro modelos (LogisticRegression, RandomForest, XGBoost, LightGBM) sobre um gerador com 15% de desfechos que contrariam o comportamento observado — o que coloca a AUC na faixa de 0,78 e transforma a escolha de modelo num trade-off entre calibração, precisão e legibilidade, em vez de uma corrida por decimal. Entrega interface Streamlit interativa com explicabilidade SHAP.
 
 Projeto 3 de 3 da série FiberNet Analytics: SQL Pack → KPI Dashboard → **Churn Predictor**.
 

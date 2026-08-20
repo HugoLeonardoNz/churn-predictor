@@ -153,9 +153,21 @@ def test_upgrades_reduz_churn(df):
 
 # ── Testes de modelo e pipeline ───────────────────────────────────────────────
 
-def test_auc_minimo(trained):
+def test_auc_na_faixa_esperada(trained):
+    """AUC tem piso E teto.
+
+    O piso protege contra o modelo nao aprender. O teto protege contra o erro
+    que este projeto ja cometeu: gerar as variaveis condicionadas ao proprio
+    rotulo, chegar a 0,996 e achar que isso era resultado. Com 15% de desfechos
+    que contrariam o comportamento observado, AUC acima de 0,92 aqui significa
+    vazamento de informacao, nao um modelo melhor.
+    """
     auc_roc = trained["auc_roc"]
-    assert auc_roc >= 0.80, f"AUC-ROC abaixo do mínimo 0.80: {auc_roc:.4f}"
+    assert auc_roc >= 0.72, f"AUC-ROC abaixo do piso 0.72: {auc_roc:.4f}"
+    assert auc_roc <= 0.92, (
+        f"AUC-ROC acima do teto 0.92 ({auc_roc:.4f}) — investigar vazamento "
+        f"antes de comemorar"
+    )
 
 
 def test_sem_data_leakage(trained):

@@ -58,7 +58,21 @@ Este projeto entrega exatamente isso: uma lista priorizada de contratos por nív
 
 ## Principais Achados (Base Sintética FiberNet)
 
-- **Plano Fibra 100MB concentra ~37% de churn** — 3,6× maior que o Fibra 1GB (10%)
+> **Leia isto antes dos números.** A base é gerada, e as relações abaixo foram
+> **escolhidas** no gerador — o churn por plano sai de `PLAN_FACTOR`, os pesos SHAP
+> refletem a ordem em que as variáveis entram na simulação. Não são descobertas
+> sobre o mercado de ISP, e citá-las como se fossem seria o mesmo erro que a seção
+> "Por que 0,78 e não 0,99" descreve, uma camada acima.
+>
+> O que É demonstrável aqui: o pipeline recupera a estrutura que existe no dado,
+> mede o quanto dela é recuperável (AUC 0,785 contra um teto imposto por 15% de
+> ruído), e traduz isso em priorização com MRR em exposição. A leitura de negócio
+> é o exercício; o achado de mercado teria de vir de base real.
+
+- **Plano Fibra 100MB concentra 36,7% de churn** — 3,6× o do Fibra 1GB (10,2%). É o mesmo
+  número que o [SQL Analytics Pack](https://github.com/HugoLeonardoNz/sql-analytics-pack)
+  devolve rodando `queries/02_churn_por_plano.sql` contra o seed: os dois projetos
+  compartilham a base FiberNet, e conferir isso é o teste de que a série é coerente
 - Correlação inversa clara entre valor do plano e taxa de cancelamento
 - Clientes com ≥ 2 faturas em atraso + score de risco > 4 têm probabilidade de churn > 70%
 - **Tempo de casa por si só não é protetor** — o comportamento financeiro é o principal sinalizador
@@ -110,12 +124,13 @@ Este projeto tem dois artefatos intencionalmente separados:
 ### `app.py` — Dashboard Interativo
 - Modelo: **RandomForest** (scikit-learn)
 - Foco: usabilidade, simulador interativo, plano de ação em tempo real
-- Recall churn: ~95% no dado sintético — ver a ressalva sobre as métricas mais abaixo
+- Base própria de 300 contratos, separada da do `pipeline.py` — as métricas do modelo
+  do app são calculadas e exibidas na aba **Desempenho do Modelo**, não fixadas aqui
 
 ### `pipeline.py` — Validação Técnica Completa
-- Compara 4 modelos: Logistic Regression, RandomForest, **XGBoost** (selecionado), LightGBM
-- Modelo final: XGBoost — AUC 0.9960, F1 0.9544
-- Threshold ótimo calibrado via curva Precision-Recall (0.522)
+- Compara 4 modelos: Logistic Regression, RandomForest, XGBoost, LightGBM
+- Modelo final: LogisticRegression — AUC 0.785, F1 0.673
+- Threshold ótimo calibrado via curva Precision-Recall (0.603)
 - SHAP values calculados para interpretabilidade de feature importance
 - Calibração de probabilidade com isotonic regression
 
@@ -125,29 +140,43 @@ Este projeto tem dois artefatos intencionalmente separados:
 
 ## Desempenho dos Modelos (pipeline.py)
 
-| Modelo | CV AUC (μ) | AUC-ROC | F1 | Recall |
-|--------|-----------|---------|-----|--------|
-| LogisticRegression | 0.9934 | 0.9946 | 0.9409 | 0.9556 |
-| RandomForest | 0.9942 | 0.9951 | 0.9520 | 0.9467 |
-| **XGBoost** ✓ | **0.9949** | **0.9960** | **0.9544** | **0.9544** |
-| LightGBM | 0.9948 | 0.9960 | 0.9530 | 0.9567 |
+| Modelo | CV AUC (μ) | AUC-ROC | F1 | Precisão | Recall | Brier |
+|--------|-----------|---------|-----|---------|--------|-------|
+| **LogisticRegression** ✓ | **0.7738** | **0.7854** | 0.6517 | 0.6542 | 0.6491 | 0.1695 |
+| RandomForest | 0.7800 | 0.7787 | 0.6710 | **0.8009** | 0.5774 | **0.1418** |
+| XGBoost | 0.7791 | 0.7769 | **0.6733** | 0.7549 | 0.6076 | 0.1530 |
+| LightGBM | 0.7741 | 0.7846 | 0.6667 | 0.7418 | 0.6054 | 0.1550 |
 
-### Sobre esses números: eles medem o gerador, não o modelo
+### Por que 0,78 e não 0,99
 
-AUC 0,996 em churn não acontece com dado real. Aqui acontece porque **os dados são
-sintéticos e gerados condicionalmente ao rótulo**: cada variável é sorteada de uma
-distribuição diferente conforme o cliente ser churn ou não (`build_dataset`, em
-`pipeline.py`, declara isso na própria docstring — "garante alta separabilidade").
+Uma versão anterior deste projeto reportava **AUC 0,996** — e a regressão logística fazia
+0,9946. Quando o modelo mais simples empata com o mais sofisticado na terceira casa, o que
+está fácil é o problema, não o algoritmo.
 
-O sinal de que isso é artefato do dado e não mérito do modelo está na própria tabela:
-**uma regressão logística simples faz 0,9946.** Quando o modelo mais simples empata com o
-mais sofisticado em 0,99, o que está fácil é o problema, não o algoritmo.
+A causa estava no gerador: cada variável era sorteada de uma distribuição diferente
+conforme o cliente ser churn ou não. O rótulo era o próprio parâmetro da simulação, o
+modelo só precisava desfazer a conta, e o SHAP redescobria as regras que o script tinha
+acabado de escrever. O número media o gerador, não o modelo.
 
-O que este projeto demonstra de verdade: montagem de pipeline com validação cruzada
-estratificada, comparação de modelos, calibração de threshold pela curva
-Precision-Recall, calibração de probabilidade e interpretabilidade com SHAP. **A métrica
-não é evidência de performance em produção** — com dado real, esperar algo entre 0,75 e
-0,85 seria realista.
+Hoje o gerador tem `RUIDO_COMPORTAMENTAL = 0.15`: **15% dos clientes têm desfecho que
+contraria o próprio comportamento** — gente que cancela sem nenhum sinal prévio e gente
+que acumula atraso, chamado e NPS baixo e fica. Isso existe em base real, onde as
+variáveis disponíveis nunca explicam tudo, e cria um **teto de acerto**. A suíte de testes
+verifica esse teto: `test_auc_na_faixa_esperada` falha tanto abaixo de 0,72 quanto **acima
+de 0,92** — porque, com esse ruído, AUC alto demais só pode vir de vazamento.
+
+O resultado é mais interessante que o anterior. Os quatro modelos empatam em AUC (0,777 a
+0,785), então a escolha deixa de ser "qual tem o maior número" e passa a ser um
+trade-off explícito:
+
+- **RandomForest** tem a melhor calibração (Brier 0,142) e a maior precisão (0,80) — erra
+  menos ao dizer "vai cancelar", e é o que faz sentido quando cada acionamento custa
+  desconto ou visita técnica;
+- **XGBoost** tem o melhor F1, o equilíbrio entre os dois erros;
+- **LogisticRegression** ganha no AUC médio da validação cruzada e é o modelo do relatório
+  — com coeficientes legíveis, o que num painel de retenção vale mais do que 0,002 de AUC.
+
+Essa conversa é a entrega. Uma tabela em que todo mundo faz 0,99 não tem conversa nenhuma.
 
 ---
 
@@ -168,13 +197,24 @@ Explicação individual — por que **este** cliente foi classificado como risco
 
 ## Top Features por Importância (SHAP)
 
-| Rank | Feature | Interpretação |
-|------|---------|---------------|
-| 1 | `meses_sem_incidente` | Clientes que não abrem chamados há muito tempo têm menos engajamento |
-| 2 | `score_satisfacao` | NPS baixo é sinal precoce de saída |
-| 3 | `score_risco_total` | Agregado de inadimplência + suporte |
-| 4 | `qtd_chamados_suporte` | Volume de tickets é preditor forte |
-| 5 | `dias_atraso_pagamento` | Atraso financeiro confirma tendência de saída |
+| Rank | Feature | SHAP médio | Interpretação |
+|------|---------|-----------:|---------------|
+| 1 | `meses_sem_incidente` | 0,961 | Tempo desde o último incidente — o sinal mais forte da base |
+| 2 | `score_satisfacao` | 0,749 | Derivada de NPS e chamados; concentra a leitura de satisfação |
+| 3 | `nps_score` | 0,582 | NPS baixo é sinal precoce de saída |
+| 4 | `qtd_chamados_suporte` | 0,298 | Volume de tickets |
+| 5 | `plano` | 0,177 | Plano de menor ticket concentra mais cancelamento |
+
+`meses_sem_incidente` e `score_satisfacao` sozinhos carregam mais peso que todo o resto
+somado, e as variáveis financeiras (`risco_pagamento`, `dias_atraso_pagamento`) aparecem
+só no 8º e 9º lugar.
+
+**Esse ranking é o do gerador, não do mercado.** Ele diz que o SHAP recuperou
+corretamente a estrutura que `build_dataset` escreveu — que é o que se pode pedir a uma
+validação de pipeline, e é exatamente por isso que ele está aqui. A frase que essa
+figura *sugere* ("quando o atraso de pagamento aparece, a decisão já foi tomada") é uma
+hipótese plausível de retenção em ISP, e continua sendo só isso: uma hipótese, até
+alguém rodar este mesmo pipeline contra uma base real.
 
 ---
 

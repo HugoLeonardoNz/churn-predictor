@@ -23,6 +23,15 @@ html, body, [class*="css"], .stApp { background-color: #060912 !important; font-
 .block-container { padding: 2rem 2.5rem !important; max-width: 1280px !important; }
 [data-testid="stSidebar"] { background: #0a0e1a !important; border-right: 1px solid rgba(99,102,241,0.15) !important; }
 
+/* Escala de arredondamento — um degrau por nivel de superficie, e nada fora
+   dela. E a mesma escala dos relatorios Power BI do portfolio: paleta e
+   tipografia separam as pecas, o acabamento as une. Antes eram seis raios
+   escolhidos um a um (14, 12, 10, 8, 3, 999). */
+:root {
+    --r-chip:  10px;   /* selo, tag, barra de progresso */
+    --r-ctrl:  14px;   /* campo, botao, aba */
+    --r-panel: 20px;   /* cartao e painel */
+}
 h1 { color: #f0f2f8 !important; font-size: 26px !important; letter-spacing: -0.5px !important; font-weight: 700 !important; }
 h2 { color: #cbd5e1 !important; font-size: 16px !important; font-weight: 600 !important; }
 h3 { color: #94a3b8 !important; font-size: 13px !important; font-weight: 500 !important; }
@@ -32,7 +41,7 @@ hr { border-color: rgba(99,102,241,0.1) !important; margin: 12px 0 !important; }
 .stat-card {
     background: rgba(13,17,30,0.9);
     border: 1px solid rgba(99,102,241,0.2);
-    border-radius: 14px;
+    border-radius: var(--r-panel);
     padding: 18px 22px;
 }
 .stat-label { font-size: 10px; color: #4b5468; letter-spacing: 0.12em; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; }
@@ -42,7 +51,7 @@ hr { border-color: rgba(99,102,241,0.1) !important; margin: 12px 0 !important; }
 .risk-badge {
     display: inline-block;
     padding: 6px 18px;
-    border-radius: 999px;
+    border-radius: var(--r-chip);
     font-family: 'JetBrains Mono', monospace;
     font-size: 13px;
     font-weight: 700;
@@ -52,7 +61,7 @@ hr { border-color: rgba(99,102,241,0.1) !important; margin: 12px 0 !important; }
 .action-box {
     background: rgba(13,17,30,0.9);
     border: 1px solid rgba(99,102,241,0.18);
-    border-radius: 12px;
+    border-radius: var(--r-panel);
     padding: 16px 20px;
     margin-top: 16px;
 }
@@ -64,19 +73,19 @@ hr { border-color: rgba(99,102,241,0.1) !important; margin: 12px 0 !important; }
 .stTabs [data-baseweb="tab-list"] {
     background: rgba(13,17,30,0.8) !important;
     border: 1px solid rgba(99,102,241,0.12) !important;
-    border-radius: 10px !important;
+    border-radius: var(--r-panel) !important;
     padding: 4px !important;
     gap: 4px !important;
 }
-.stTabs [data-baseweb="tab"] { color: #8b92a5 !important; border-radius: 8px !important; font-size: 13px !important; }
+.stTabs [data-baseweb="tab"] { color: #8b92a5 !important; border-radius: var(--r-ctrl) !important; font-size: 13px !important; padding: 0.5rem 1.1rem !important; }
 .stTabs [aria-selected="true"] { color: #a5b4fc !important; background: rgba(99,102,241,0.15) !important; }
 .stTabs [data-baseweb="tab-panel"] { padding-top: 20px !important; }
 
 .stSlider label { color: #8b92a5 !important; font-size: 12px !important; }
 .stSelectbox label { color: #8b92a5 !important; font-size: 12px !important; }
-[data-testid="stDataFrame"] { border: 1px solid rgba(99,102,241,0.15) !important; border-radius: 10px !important; }
+[data-testid="stDataFrame"] { border: 1px solid rgba(99,102,241,0.15) !important; border-radius: var(--r-panel) !important; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: var(--r-chip); }
 
 .stDownloadButton button {
     background: rgba(99,102,241,0.12) !important;
@@ -84,7 +93,7 @@ hr { border-color: rgba(99,102,241,0.1) !important; margin: 12px 0 !important; }
     color: #a5b4fc !important;
     font-family: 'JetBrains Mono', monospace !important;
     font-size: 11px !important;
-    border-radius: 8px !important;
+    border-radius: var(--r-ctrl) !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -98,6 +107,23 @@ SELLERS     = ["Carlos Mendes", "Patricia Lima", "Roberto Souza", "Fernanda Cost
 COLORS      = {
     "indigo": "#6366f1", "cyan": "#22d3ee", "green": "#10b981",
     "amber": "#f59e0b", "red": "#ef4444", "muted": "#8b92a5",
+}
+
+# Ordem por velocidade contratada, nao alfabetica. Ordenado por texto, o eixo sai
+# "100MB, 1GB, 200MB, 500MB" e a escada que a legenda promete — quanto maior o
+# plano, menor o churn — some do grafico: o 1GB, que e o melhor plano, aparece na
+# segunda coluna. A ordem do eixo e parte da leitura.
+PLAN_ORDER  = ["Fibra 100MB", "Fibra 200MB", "Fibra 500MB", "Fibra 1GB"]
+
+# Cor fixa por plano, usada em todo grafico que quebra por plano. Antes, a lista
+# de cores era aplicada por POSICAO: o mesmo "Fibra 1GB" saia ambar num grafico e
+# roxo no outro, ao lado. Cor amarrada ao valor resolve isso e ainda carrega
+# sentido — do plano mais barato (vermelho, mais churn) ao mais caro (verde).
+PLAN_COLORS = {
+    "Fibra 100MB": COLORS["red"],
+    "Fibra 200MB": COLORS["amber"],
+    "Fibra 500MB": COLORS["cyan"],
+    "Fibra 1GB":   COLORS["green"],
 }
 
 FEATURE_NAMES = [
@@ -252,7 +278,7 @@ def gauge(prob):
 def main():
     md = train()
 
-    st.markdown("# 🤖 Customer Churn Predictor")
+    st.markdown("# Customer Churn Predictor")
     st.markdown(
         "<p style='margin-top:-8px;margin-bottom:0'>FiberNet ISP · RandomForest + Feature Engineering · "
         "<span style='color:#6366f1;font-family:monospace'>portfólio Hugo Leonardo</span></p>",
@@ -261,10 +287,10 @@ def main():
     st.markdown("<hr>", unsafe_allow_html=True)
 
     tab1, tab2, tab3, tab4 = st.tabs([
-        "💼  Análise de Risco",
-        "🔍  Simulador de Contratos",
-        "🎯  Plano de Retenção",
-        "⚙️  Desempenho do Modelo",
+        "Análise de Risco",
+        "Simulador de Contratos",
+        "Plano de Retenção",
+        "Desempenho do Modelo",
     ])
 
     # ── Tab 1: Análise de Risco ───────────────────────────────────────────────
@@ -295,7 +321,7 @@ def main():
         churn_100 = md["df"][md["df"]["plan"] == "Fibra 100MB"]["churn"].mean() * 100
         churn_1g  = md["df"][md["df"]["plan"] == "Fibra 1GB"]["churn"].mean() * 100
         st.markdown(f"""
-        <div style='background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:16px 20px;margin-bottom:24px'>
+        <div style='background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--r-panel);padding:16px 20px;margin-bottom:24px'>
           <div style='font-size:10px;color:#ef4444;letter-spacing:0.2em;font-family:monospace;text-transform:uppercase;margin-bottom:8px'>⚠ Alerta de Risco · Base Atual</div>
           <div style='font-size:13px;color:#c8d0db;line-height:1.7'>
             <b style='color:#f8fafc'>{pct_mrr_risco:.0f}% do MRR total</b> está em zona de risco (ALTO + MÉDIO).
@@ -312,11 +338,12 @@ def main():
             churn_by_plan = (
                 md["df"].groupby("plan")["churn"]
                 .apply(lambda x: x.mean() * 100)
+                .reindex(PLAN_ORDER)
                 .reset_index(name="churn_pct")
             )
             fig = go.Figure(go.Bar(
                 x=churn_by_plan["plan"], y=churn_by_plan["churn_pct"],
-                marker=dict(color=[COLORS["red"], COLORS["amber"], COLORS["cyan"], COLORS["green"]]),
+                marker=dict(color=[PLAN_COLORS[p] for p in churn_by_plan["plan"]]),
                 text=[f"{v:.1f}%" for v in churn_by_plan["churn_pct"]],
                 textposition="outside", textfont=dict(color=COLORS["muted"]),
             ))
@@ -325,10 +352,13 @@ def main():
             st.caption("Correlação inversa entre valor do plano e churn — clientes de menor ticket concentram maior risco de evasão.")
 
         with col2:
-            risk_dist = md["df"].groupby("plan")["risk_score"].mean().reset_index()
+            risk_dist = (
+                md["df"].groupby("plan")["risk_score"].mean()
+                .reindex(PLAN_ORDER).reset_index()
+            )
             fig2 = go.Figure(go.Bar(
                 x=risk_dist["plan"], y=risk_dist["risk_score"],
-                marker=dict(color=risk_dist["risk_score"], colorscale=[[0,"#8b5cf6"],[1,"#ef4444"]]),
+                marker=dict(color=[PLAN_COLORS[p] for p in risk_dist["plan"]]),
                 text=[f"{v:.2f}" for v in risk_dist["risk_score"]],
                 textposition="outside", textfont=dict(color=COLORS["muted"]),
             ))
@@ -424,8 +454,8 @@ def main():
                 st.markdown(f"""
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
                     <span style="color:#8b92a5;font-size:11px;width:150px;flex-shrink:0">{feat}</span>
-                    <div style="flex:1;height:6px;background:rgba(255,255,255,0.07);border-radius:3px">
-                        <div style="width:{pct:.0f}%;height:6px;background:{COLORS['indigo']};border-radius:3px;opacity:0.85"></div>
+                    <div style="flex:1;height:6px;background:rgba(255,255,255,0.07);border-radius:var(--r-chip)">
+                        <div style="width:{pct:.0f}%;height:6px;background:{COLORS['indigo']};border-radius:var(--r-chip);opacity:0.85"></div>
                     </div>
                     <span style="color:{COLORS['indigo']};font-family:monospace;font-size:10px">{pct:.0f}%</span>
                 </div>""", unsafe_allow_html=True)
