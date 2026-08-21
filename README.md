@@ -19,7 +19,7 @@ Pipeline completo de ML para identificação e priorização de contratos em ris
 
 ![Dashboard de análise de risco](docs/img/app.png)
 
-*Aba de Análise de Risco: exposição de MRR por faixa, alerta de concentração e padrão de cancelamento por plano.*
+*Aba de Análise de Risco: exposição de MRR por faixa de risco, alerta de concentração e taxa de cancelamento por plano e por região.*
 
 ---
 
@@ -29,10 +29,13 @@ Os 3 projetos desta série representam a **mesma empresa fictícia** em granular
 
 | Granularidade | Projetos | Escala | Abrangência |
 |---|---|---|---|
-| **Análise Regional** | SQL Analytics Pack · Churn Predictor | 300 contratos | Região Centro-MG: Betim, Contagem, Ribeirão das Neves, Esmeraldas, Ibirité |
-| **Visão Operacional Nacional** | Telecom KPI Dashboard | ~82.500 clientes | 5 regiões nacionais (Norte, Sul, Leste, Oeste, Centro) |
+| **Amostra Regional** | SQL Analytics Pack | 300 contratos | Centro-MG: Betim, Contagem, Ribeirão das Neves, Esmeraldas, Ibirité |
+| **Base de Modelagem** | **Churn Predictor** | 15.000 contratos | 5 regiões (Norte, Sul, Leste, Oeste, Centro) · planos até Empresarial |
+| **Visão Operacional Nacional** | Telecom KPI Dashboard | ~82.500 clientes | 5 regiões nacionais |
 
-A divergência de escala é **intencional**: o SQL Pack e o Churn Predictor mergulham numa amostra regional de alta granularidade para análise SQL profunda e modelagem preditiva. O KPI Dashboard consolida a operação completa para monitoramento em tempo real — os mesmos padrões de negócio (churn por plano, inadimplência, MRR), em escala nacional.
+A divergência de escala é **intencional**: o SQL Pack mergulha numa amostra regional pequena, onde dá para conferir cada linha na mão. Modelo precisa de volume, então o Churn Predictor gera 15.000 contratos. O KPI Dashboard consolida a operação inteira.
+
+**O que essas bases NÃO são: a mesma tabela.** Cada projeto gera a sua, com o seu gerador. O padrão de negócio se repete — plano de menor ticket cancela mais, atraso e insatisfação antecipam a saída — mas o número exato de um não vale como conferência do outro. Uma versão anterior deste repositório fixava as taxas de churn do app nos valores que a query 02 do SQL Pack devolve e apresentava a coincidência como prova de coerência da série. Coincidência costurada à mão não prova nada.
 
 ---
 
@@ -48,7 +51,7 @@ Este projeto entrega exatamente isso: uma lista priorizada de contratos por nív
 
 | Entrega | Descrição |
 |---------|-----------|
-| Score de risco por contrato | Composto por atraso, tickets, downgrades e % pgto. em atraso |
+| Score de risco por contrato | Probabilidade out-of-fold do RandomForest sobre 17 variáveis — pagamento, suporte, satisfação, uso e contrato |
 | Segmentação ALTO / MÉDIO / BAIXO | Prioridade de ação para o time comercial e de retenção |
 | MRR em risco calculado | Exposição financeira real por segmento |
 | Plano de ação por faixa | Do contato proativo ao cashback de emergência |
@@ -69,13 +72,14 @@ Este projeto entrega exatamente isso: uma lista priorizada de contratos por nív
 > ruído), e traduz isso em priorização com MRR em exposição. A leitura de negócio
 > é o exercício; o achado de mercado teria de vir de base real.
 
-- **Plano Fibra 100MB concentra 36,7% de churn** — 3,6× o do Fibra 1GB (10,2%). É o mesmo
-  número que o [SQL Analytics Pack](https://github.com/HugoLeonardoNz/sql-analytics-pack)
-  devolve rodando `queries/02_churn_por_plano.sql` contra o seed: os dois projetos
-  compartilham a base FiberNet, e conferir isso é o teste de que a série é coerente
-- Correlação inversa clara entre valor do plano e taxa de cancelamento
-- Clientes com ≥ 2 faturas em atraso + score de risco > 4 têm probabilidade de churn > 70%
-- **Tempo de casa por si só não é protetor** — o comportamento financeiro é o principal sinalizador
+- **Plano Fibra 100MB concentra 39,5% de churn** — 1,8× o do Empresarial (21,9%), com a
+  escada completa passando por 200MB (28,3%) e 500MB (22,9%)
+- **Região pesa quase tanto quanto plano**: Norte em 39,0% contra Sul em 21,2%
+- **Insatisfação manda mais que inadimplência.** Cliente com NPS até 2 e pagamento em dia
+  cancela em 81% dos casos; cliente com NPS 9–10 e 61 a 90 dias de atraso, em 30%. O atraso
+  empilha em cima do NPS baixo (chega a 93%), mas sozinho não leva ninguém para a saída
+- **Tempo de casa por si só não é protetor** — `tempo_contrato` fica em 13º de 17 na
+  importância do modelo, atrás de todas as variáveis de satisfação e suporte
 
 ---
 
@@ -83,17 +87,24 @@ Este projeto entrega exatamente isso: uma lista priorizada de contratos por nív
 
 ```
 churn-predictor/
+├── churn_data.py       ← Gerador, features e pré-processamento — fonte única
 ├── app.py              ← Dashboard interativo (Streamlit) — RandomForest
 ├── pipeline.py         ← Validação técnica: 4 modelos comparados, SHAP, threshold ótimo
-├── predictions.csv     ← Output rápido do pipeline
 ├── outputs/
 │   ├── predictions.csv
 │   ├── relatorio_churn.md   ← Relatório completo gerado pelo pipeline
 │   └── shap/                ← SHAP summary, dependência e force plots
 ├── tests/
-│   └── test_sanity.py  ← Testes de sanidade do pipeline
-└── requirements.txt
+│   └── test_sanity.py  ← 21 testes: dados, correlações, modelo e fonte única
+├── .streamlit/
+│   └── config.toml     ← Tema alinhado ao CSS do app
+├── requirements.txt        ← Só o que o app precisa (é o que o deploy instala)
+└── requirements-dev.txt    ← + XGBoost, LightGBM, SHAP, pytest (pipeline e testes)
 ```
+
+`churn_data.py` é o coração: `app.py` e `pipeline.py` importam dele e **nenhum dos dois
+gera dado por conta própria**. Três testes garantem isso — a seção
+[Um gerador, dois consumidores](#um-gerador-dois-consumidores) conta por quê.
 
 ---
 
@@ -106,13 +117,22 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Acessa em `http://localhost:8501`.
+Acessa em `http://localhost:8501`. O primeiro carregamento leva ~15s: gera os 15.000
+contratos e treina os 6 modelos da validação out-of-fold. Depois fica em cache.
 
 ### Pipeline de Validação Técnica
 
 ```bash
+pip install -r requirements-dev.txt
 python pipeline.py
 # Gera: outputs/relatorio_churn.md · outputs/predictions.csv · outputs/shap/*.png
+```
+
+### Testes
+
+```bash
+pip install -r requirements-dev.txt
+pytest tests/ -v
 ```
 
 ---
@@ -122,10 +142,15 @@ python pipeline.py
 Este projeto tem dois artefatos intencionalmente separados:
 
 ### `app.py` — Dashboard Interativo
-- Modelo: **RandomForest** (scikit-learn)
+- Modelo: **RandomForest** (scikit-learn), sobre o mesmo `churn_data.build_dataset`
 - Foco: usabilidade, simulador interativo, plano de ação em tempo real
-- Base própria de 300 contratos, separada da do `pipeline.py` — as métricas do modelo
-  do app são calculadas e exibidas na aba **Desempenho do Modelo**, não fixadas aqui
+- As probabilidades das abas de risco são **out-of-fold**: cada contrato recebe o score do
+  modelo que não o viu no treino. Probabilidade tirada do modelo que já leu a linha é
+  otimista, e era ela que ordenava a lista de prioridade
+- O simulador explica cada previsão por ablação: troca um valor pelo do cliente mediano da
+  base e mede quanto a probabilidade cai. Antes, multiplicava importância global pelo valor
+  bruto da variável — somava reais com contagem de chamados e exibia o total como
+  porcentagem
 
 ### `pipeline.py` — Validação Técnica Completa
 - Compara 4 modelos: Logistic Regression, RandomForest, XGBoost, LightGBM
@@ -177,6 +202,37 @@ trade-off explícito:
   — com coeficientes legíveis, o que num painel de retenção vale mais do que 0,002 de AUC.
 
 Essa conversa é a entrega. Uma tabela em que todo mundo faz 0,99 não tem conversa nenhuma.
+
+---
+
+## Um gerador, dois consumidores
+
+Este repositório já teve **dois geradores**. O `pipeline.py` foi corrigido para os 15% de
+ruído descritos acima; o `app.py` tinha uma cópia própria, de 300 contratos, com cada
+variável sorteada condicionada ao rótulo `churn` — exatamente o defeito que a seção
+anterior conta ter sido removido.
+
+O resultado é que o número publicado e o número documentado discordavam:
+
+| | AUC |
+|---|---|
+| `pipeline.py`, README e testes | **0,785** |
+| O que o app mostrava na tela | **0,92** |
+
+E 0,92 é justamente o teto que `test_auc_na_faixa_esperada` reprova. O repositório tinha um
+teste contra esse valor e mesmo assim o exibia — porque o teste olhava para o pipeline, e
+quem ia para o ar era o app.
+
+A correção não foi copiar o gerador certo para o app. Foi extrair `churn_data.py` e fazer os
+dois importarem de lá, com três testes fechando a porta:
+
+- `test_pipeline_e_app_compartilham_o_gerador` — as funções têm de ser o mesmo objeto
+- `test_app_importa_de_churn_data`
+- `test_app_nao_tem_gerador_proprio` — falha se `np.random.choice` reaparecer no `app.py`
+
+**A lição é a classe do bug, não o bug.** Registro paralelo mantido à mão sempre desanda:
+alguém corrige um lado, nada quebra, e a divergência só aparece quando um estranho compara
+os dois. Ou se deriva de uma fonte só, ou se escreve um teste que falha quando divergirem.
 
 ---
 

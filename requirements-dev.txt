@@ -1,0 +1,8 @@
+# Ambiente completo: app + pipeline de treino + testes.
+-r requirements.txt
+matplotlib>=3.8.0
+xgboost>=2.0.0
+lightgbm>=4.3.0
+shap>=0.44.0
+pytest>=8.0.0
+tabulate>=0.9.0

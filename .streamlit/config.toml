@@ -1,0 +1,12 @@
+# Tema do Streamlit alinhado ao CSS do app. Sem isto, o acento padrao (vermelho)
+# pinta slider, checkbox e aba ativa, e briga com o indigo da paleta — e o
+# vermelho aqui ja tem significado: e a cor do risco ALTO.
+[theme]
+base                     = "dark"
+primaryColor             = "#6366f1"
+backgroundColor          = "#060912"
+secondaryBackgroundColor = "#0d111e"
+textColor                = "#f0f2f8"
+
+[server]
+headless = true

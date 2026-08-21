@@ -1,11 +1,11 @@
+# Dependencias do app Streamlit (app.py) — e so isso.
+# O Streamlit Community Cloud instala este arquivo, e ele por isso nao carrega
+# xgboost, lightgbm nem shap: sao 700+ MB que o app nao usa, num container de
+# 1 GB, e cada um deles e uma chance a mais de o build falhar por versao.
+# Para rodar o pipeline completo (4 modelos + SHAP + relatorio):
+#   pip install -r requirements-dev.txt
 streamlit>=1.35.0
 pandas>=2.2.0
 numpy>=1.26.0
 scikit-learn>=1.4.0
 plotly>=5.20.0
-matplotlib>=3.8.0
-xgboost>=2.0.0
-lightgbm>=4.3.0
-shap>=0.44.0
-pytest>=8.0.0
-tabulate>=0.9.0

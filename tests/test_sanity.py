@@ -208,3 +208,44 @@ def test_features_match_definition(df_feat):
         assert feat in df_feat.columns, f"Feature definida mas ausente no DataFrame: {feat}"
     assert len(all_defined) == len(set(all_defined)), \
         "Colunas duplicadas em ALL_FEATURES"
+
+
+# ── Fonte única de dados ──────────────────────────────────────────────────────
+# O app Streamlit ja teve o seu proprio gerador, copiado do pipeline e depois
+# nao atualizado: o pipeline foi corrigido para 15% de desfechos contrarios ao
+# comportamento e o app ficou com as variaveis sorteadas condicionadas ao rotulo.
+# Resultado: o demo publico mostrava AUC 0,92 — o teto que este arquivo reprova —
+# enquanto o README dizia 0,785. Estes testes existem para o registro paralelo
+# nao voltar por descuido.
+
+APP_SRC = os.path.join(os.path.dirname(__file__), "..", "app.py")
+
+
+def _app_source():
+    with open(APP_SRC, encoding="utf-8") as f:
+        return f.read()
+
+
+def test_pipeline_e_app_compartilham_o_gerador():
+    import churn_data
+    import pipeline
+    assert pipeline.build_dataset is churn_data.build_dataset, \
+        "pipeline.build_dataset deixou de ser o de churn_data"
+    assert pipeline.add_derived_features is churn_data.add_derived_features
+    assert pipeline.build_pipeline is churn_data.build_pipeline
+
+
+def test_app_importa_de_churn_data():
+    src = _app_source()
+    assert "from churn_data import" in src, \
+        "app.py precisa consumir o gerador compartilhado, nao um proprio"
+
+
+def test_app_nao_tem_gerador_proprio():
+    src = _app_source()
+    proibidos = ["def generate_data", "np.random.seed(", "np.random.choice("]
+    achados = [p for p in proibidos if p in src]
+    assert not achados, (
+        f"app.py voltou a gerar dado por conta propria ({achados}). "
+        "O dataset vem de churn_data.build_dataset."
+    )
