@@ -7,6 +7,7 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-Interactive-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
 ![Domain](https://img.shields.io/badge/Domain-Telecom%20%2F%20ISP-0ea5e9?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Rodar-local%20em%202%20comandos-10b981?style=for-the-badge)
+![testes](https://github.com/HugoLeonardoNz/churn-predictor/actions/workflows/tests.yml/badge.svg)
 
 **Projeto 3 de 3 da série FiberNet Analytics.**  
 Pipeline completo de ML para identificação e priorização de contratos em risco de cancelamento — do feature engineering ao plano de ação operacional.

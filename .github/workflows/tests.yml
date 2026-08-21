@@ -1,0 +1,32 @@
+name: testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # requirements-dev traz o pipeline completo (xgboost, lightgbm, shap).
+      # O app roda so com requirements.txt — a separacao existe porque o
+      # Streamlit Cloud instala o arquivo principal num container de 1 GB.
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: pytest
+        run: pytest tests/ -v
+
+      # O pipeline e a peca tecnica do repositorio: se ele parar de rodar de
+      # ponta a ponta, o README passa a descrever algo que nao executa.
+      - name: Pipeline de ponta a ponta
+        run: python pipeline.py
