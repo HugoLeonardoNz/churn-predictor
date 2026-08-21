@@ -31,7 +31,7 @@ Os 3 projetos desta série representam a **mesma empresa fictícia** em granular
 |---|---|---|---|
 | **Amostra Regional** | SQL Analytics Pack | 300 contratos | Centro-MG: Betim, Contagem, Ribeirão das Neves, Esmeraldas, Ibirité |
 | **Base de Modelagem** | **Churn Predictor** | 15.000 contratos | 5 regiões (Norte, Sul, Leste, Oeste, Centro) · planos até Empresarial |
-| **Visão Operacional Nacional** | Telecom KPI Dashboard | ~82.500 clientes | 5 regiões nacionais |
+| **Visão Operacional Nacional** | Telecom KPI Dashboard | 88.501 clientes (jan/25) | 5 regiões nacionais |
 
 A divergência de escala é **intencional**: o SQL Pack mergulha numa amostra regional pequena, onde dá para conferir cada linha na mão. Modelo precisa de volume, então o Churn Predictor gera 15.000 contratos. O KPI Dashboard consolida a operação inteira.
 

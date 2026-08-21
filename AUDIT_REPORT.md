@@ -64,7 +64,7 @@ churn-predictor/
 - Dois artefatos complementares: `app.py` (experiência do usuário) + `pipeline.py` (validação técnica rigorosa)
 - Comparação explícita de quatro algoritmos com cross-validation 5-fold
 - SHAP: summary plot + dependência top-3 features + force plots de 3 clientes individuais
-- Dados sintéticos FiberNet alinhados com SQL Pack e KPI Dashboard (mesma base canônica de 300 contratos)
+- Dados sintéticos FiberNet gerados por `churn_data.py`: 15.000 contratos, fonte única do app e do pipeline. **Não** é a mesma tabela do SQL Pack nem do KPI Dashboard — cada projeto gera a sua; o que se repete é o padrão de negócio, não o número
 - Lista priorizada de contratos críticos exportável com MRR em risco
 
 ---
