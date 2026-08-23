@@ -16,6 +16,8 @@ Pipeline completo de ML para identificação e priorização de contratos em ris
 
 </div>
 
+> Peça do portfólio de **Hugo Leonardo**, Analista de Dados — os oito projetos, com o contexto de cada um, estão em **[hugoleonardonz.github.io/portfolio](https://hugoleonardonz.github.io/portfolio/)**.
+
 ---
 
 ![Dashboard de análise de risco](docs/img/app.png)
