@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import StratifiedKFold
@@ -189,9 +190,17 @@ def _rf():
 
 def _typical_row(df):
     """Cliente mediano da base — referencia do simulador para dizer o quanto cada
-    sinal deste contrato afasta ele do normal."""
+    sinal deste contrato afasta ele do normal.
+
+    Testa se a coluna e numerica em vez de testar `dtype == object`: no pandas 3
+    as colunas de texto deixaram de ser `object` (viraram string com Arrow por
+    tras), o teste antigo dava falso para elas e o codigo caia na `.median()` de
+    uma coluna de texto. Isso derrubou o app no Streamlit Cloud com
+    `TypeError: Cannot perform reduction 'median'` — e nao aparecia local, onde
+    o pandas ainda era 2.x.
+    """
     return {
-        c: (df[c].mode().iloc[0] if df[c].dtype == object else df[c].median())
+        c: (df[c].median() if is_numeric_dtype(df[c]) else df[c].mode().iloc[0])
         for c in RAW_COLS
     }
 
