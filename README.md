@@ -98,7 +98,9 @@ churn-predictor/
 │   ├── relatorio_churn.md   ← Relatório completo gerado pelo pipeline
 │   └── shap/                ← SHAP summary, dependência e force plots
 ├── tests/
-│   └── test_sanity.py  ← 21 testes: dados, correlações, modelo e fonte única
+│   ├── test_sanity.py       ← 21 testes: dados, correlações, modelo e fonte única
+│   └── test_typical_row.py  ← 3 testes: o app não pode voltar a decidir tipo
+│                              de coluna por `dtype == object` (quebra no pandas 3)
 ├── .streamlit/
 │   └── config.toml     ← Tema alinhado ao CSS do app
 ├── requirements.txt        ← Só o que o app precisa (é o que o deploy instala)
