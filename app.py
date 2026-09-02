@@ -342,7 +342,7 @@ def main():
     st.markdown("# Customer Churn Predictor")
     st.markdown(
         "<p style='margin-top:-8px;margin-bottom:0'>FiberNet ISP · RandomForest + Feature Engineering · "
-        "<span style='color:#6366f1;font-family:monospace'>portfólio Hugo Leonardo</span></p>",
+        "<span style='color:#6366f1;font-family:monospace'>portfólio Hugo Nazário</span></p>",
         unsafe_allow_html=True,
     )
     st.markdown(

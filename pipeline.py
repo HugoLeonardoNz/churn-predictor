@@ -211,7 +211,7 @@ def generate_report(results_table: pd.DataFrame, best_name: str,
 
     lines = [
         "# Relatório de Análise de Churn — FiberNet ISP",
-        f"\n_Gerado automaticamente por pipeline.py - Dados sintéticos - Hugo Leonardo_\n",
+        f"\n_Gerado automaticamente por pipeline.py - Dados sintéticos - Hugo Nazário_\n",
         "---",
         "",
         "## 1. Modelo Escolhido e Justificativa",

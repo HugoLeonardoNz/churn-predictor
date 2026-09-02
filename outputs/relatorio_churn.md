@@ -1,6 +1,6 @@
 # Relatório de Análise de Churn — FiberNet ISP
 
-_Gerado automaticamente por pipeline.py - Dados sintéticos - Hugo Leonardo_
+_Gerado automaticamente por pipeline.py - Dados sintéticos - Hugo Nazário_
 
 ---
 

@@ -1,7 +1,7 @@
 # Audit Report — Customer Churn Predictor
 
 **Data:** 2026-04-27  
-**Auditor:** Hugo Leonardo  
+**Auditor:** Hugo Nazário  
 **Versão:** v2.0
 
 ---
