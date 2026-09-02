@@ -9,14 +9,14 @@
 ![Status](https://img.shields.io/badge/Rodar-local%20em%202%20comandos-10b981?style=for-the-badge)
 ![testes](https://github.com/HugoLeonardoNz/churn-predictor/actions/workflows/tests.yml/badge.svg)
 
-**Projeto 3 de 3 da série FiberNet Analytics.**  
+**Projeto 3 de 4 da série FiberNet Analytics.**  
 Pipeline completo de ML para identificação e priorização de contratos em risco de cancelamento — do feature engineering ao plano de ação operacional.
 
 [Ver pipeline técnico](#desempenho-dos-modelos-pipelinepy) · [Como rodar](#como-rodar)
 
 </div>
 
-> Peça do portfólio de **Hugo Leonardo**, Analista de Dados — os oito projetos, com o contexto de cada um, estão em **[hugoleonardonz.github.io/portfolio](https://hugoleonardonz.github.io/portfolio/)**.
+> Peça do portfólio de **Hugo Leonardo**, Analista de Dados — cada projeto, com o contexto de por que foi feito, está em **[hugoleonardonz.github.io/portfolio](https://hugoleonardonz.github.io/portfolio/)**.
 
 ---
 
@@ -279,13 +279,14 @@ alguém rodar este mesmo pipeline contra uma base real.
 
 ## Série FiberNet Analytics
 
-Este é o **Projeto 3 de 3** de uma série coesa sobre inteligência de dados em ISP:
+Este é o **Projeto 3 de 4** de uma série coesa sobre inteligência de dados em ISP:
 
 | # | Projeto | Foco | Link |
 |---|---------|------|------|
 | 1 | [SQL Analytics Pack](https://github.com/HugoLeonardoNz/SQL-Analytics-Pack) | SQL analítico · 10 queries · insights brutos | GitHub |
 | 2 | [Telecom KPI Dashboard](https://github.com/HugoLeonardoNz/telecom-kpi-dashboard) | BI operacional · visualização em tempo real | GitHub |
 | 3 | **Customer Churn Predictor** | ML · predição e priorização de risco | **Este repo** |
+| 4 | [CRM Lifecycle Analytics](https://github.com/HugoLeonardoNz/crm-lifecycle-analytics) | Coorte, LTV e teste A/B · medir a ação | GitHub |
 
 ---
 
