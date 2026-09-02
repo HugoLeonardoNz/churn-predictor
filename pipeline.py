@@ -13,17 +13,13 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import StandardScaler, OrdinalEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
 from sklearn.metrics import (
     roc_auc_score, f1_score, precision_score, recall_score,
-    brier_score_loss, precision_recall_curve, confusion_matrix,
-    classification_report,
+    brier_score_loss, confusion_matrix,
 )
 from sklearn.base import clone
 
@@ -57,6 +53,21 @@ from churn_data import (
     build_dataset, add_derived_features, build_preprocessor, build_pipeline,
     optimal_threshold,
 )
+
+# RE-EXPORTACAO DECLARADA. Tudo acima vem de churn_data e nada disso e usado
+# DENTRO deste arquivo — os testes e o app importam de `pipeline`, que e a
+# fachada unica do projeto. Sem `__all__`, o ruff le como import morto e o
+# `--fix` apaga em silencio: foi o que aconteceu em 2026-09-02 e quebrou a
+# coleta dos testes inteira. `__all__` diz ao linter, e a quem le, que a
+# reexportacao e o proposito.
+__all__ = [
+    "SEED", "RUIDO_COMPORTAMENTAL", "PLANOS", "REGIOES",
+    "PLAN_PRICE_RANGE", "PLAN_USAGE_MAX", "PLAN_W", "REGION_W",
+    "PLAN_ORDER", "REGION_ORDER", "PLAN_FACTOR", "REGION_FACTOR",
+    "CONTINUOUS_COLS", "ORDINAL_COLS", "BINARY_COLS", "ALL_FEATURES",
+    "FEATURE_NAMES", "build_dataset", "add_derived_features", "build_preprocessor",
+    "build_pipeline", "optimal_threshold",
+]
 
 
 # ── Model catalogue ────────────────────────────────────────────────────────────
@@ -211,7 +222,7 @@ def generate_report(results_table: pd.DataFrame, best_name: str,
 
     lines = [
         "# Relatório de Análise de Churn — FiberNet ISP",
-        f"\n_Gerado automaticamente por pipeline.py - Dados sintéticos - Hugo Nazário_\n",
+        "\n_Gerado automaticamente por pipeline.py - Dados sintéticos - Hugo Nazário_\n",
         "---",
         "",
         "## 1. Modelo Escolhido e Justificativa",
@@ -259,12 +270,12 @@ def generate_report(results_table: pd.DataFrame, best_name: str,
         f"| AUC-ROC   | {best_metrics_t05['AUC-ROC']:.4f} | {best_metrics_opt['AUC-ROC']:.4f} |",
         "",
         f"**Threshold ótimo = {opt_threshold:.3f}** — calculado pelo máximo F1 na curva Precision-Recall.",
-        f"Recall é priorizado (não perder churners reais) em detrimento de precisão.",
+        "Recall é priorizado (não perder churners reais) em detrimento de precisão.",
         "",
         "### Calibração de Probabilidade",
         "",
-        f"| | Brier Score |",
-        f"|---|-------------|",
+        "| | Brier Score |",
+        "|---|-------------|",
         f"| Modelo original  | {brier_before:.4f} |",
         f"| Após calibração (isotonic) | {brier_after:.4f} |",
         "",
@@ -424,7 +435,7 @@ def main():
     cm = confusion_matrix(y_test, y_pred_opt)
     fig, ax = plt.subplots(figsize=(5, 4), facecolor="#060912")
     ax.set_facecolor("#0d1117")
-    im = ax.imshow(cm, cmap="Blues")
+    ax.imshow(cm, cmap="Blues")
     ax.set_xticks([0, 1]); ax.set_yticks([0, 1])
     ax.set_xticklabels(["Ativo", "Churn"], color="#8b92a5")
     ax.set_yticklabels(["Ativo", "Churn"], color="#8b92a5")
@@ -515,14 +526,14 @@ def main():
     print(f"  Precisão   : {m_topt['Precisão']:.4f}")
     print(f"  Threshold  : {opt_thr:.4f}")
     print(f"  Churn rate : {churn_rate*100:.1f}%")
-    print(f"\n  Arquivos gerados:")
-    print(f"    - confusion_matrix.png")
-    print(f"    - outputs/predictions.csv")
-    print(f"    - outputs/relatorio_churn.md")
+    print("\n  Arquivos gerados:")
+    print("    - confusion_matrix.png")
+    print("    - outputs/predictions.csv")
+    print("    - outputs/relatorio_churn.md")
     if SHAP_OK:
-        print(f"    - outputs/shap/shap_summary.png")
-        print(f"    - outputs/shap/shap_dep_1,2,3_*.png")
-        print(f"    - outputs/shap/shap_force_cliente_1,2,3.png")
+        print("    - outputs/shap/shap_summary.png")
+        print("    - outputs/shap/shap_dep_1,2,3_*.png")
+        print("    - outputs/shap/shap_force_cliente_1,2,3.png")
     print()
 
 
